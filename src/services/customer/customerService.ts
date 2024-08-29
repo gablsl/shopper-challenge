@@ -38,6 +38,7 @@ export const updateHasConfirmed = async (
         },
         data: {
             confirmed_value,
+            measure_value: confirmed_value,
             has_confirmed: true,
         },
     });
