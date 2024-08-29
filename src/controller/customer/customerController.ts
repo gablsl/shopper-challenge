@@ -8,8 +8,8 @@ import {
     readMeasure,
     updateHasConfirmed,
 } from '../../services/customer/customerService';
-import { geminiUtils } from '../../utils/geminiUtils';
 import { getDateRange } from '../../utils/dateUtils';
+import { uploadToGemini } from '../../utils/uploadToGemini';
 
 type CustomerRequest = FastifyRequest & {
     params: {
@@ -101,26 +101,28 @@ export const postUpload = async (req: CustomerRequest, res: FastifyReply) => {
             });
         }
 
-        const gemini = geminiUtils(image);
+        const measure_value = await uploadToGemini(image);
+
+        const value = Number(measure_value.measurementText);
 
         const measure = await createUpload(customer?.customer_code, {
             image,
-            image_url: gemini.image_url,
+            image_url: measure_value.tempFilePath,
             measure_datetime: date,
             measure_type,
-            measure_value: gemini.measure_value,
+            measure_value: value,
         });
 
         return res.code(200).send({
-            image_url: gemini.image_url,
+            image_url: measure_value.tempFilePath,
             measure_value: measure.measure_value,
             measure_uuid: measure.measure_uuid,
         });
     } catch (err) {
-        console.log(err);
         return res.code(500).send({
             error_code: 'SERVER_ERROR',
             error_description: 'Houve um erro no servidor',
+            err: { err },
         });
     }
 };
