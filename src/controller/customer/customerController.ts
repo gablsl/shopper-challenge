@@ -35,14 +35,14 @@ export const getCustomer = async (req: CustomerRequest, res: FastifyReply) => {
         const { measure_type } = req.query;
 
         if (!customer_code) {
-            res.code(404).send({
+            return res.code(404).send({
                 error_code: 'MEASURES_NOT_FOUND',
                 error_description: 'Nenhuma leitura encontrada',
             });
         }
 
         if (measure_type && !['WATER', 'GAS'].includes(measure_type)) {
-            res.code(400).send({
+            return res.code(400).send({
                 error_code: 'INVALID_TYPE',
                 error_description: 'Tipo de medição não permitida',
             });
@@ -55,11 +55,11 @@ export const getCustomer = async (req: CustomerRequest, res: FastifyReply) => {
                 (measure) => measure.measure_type === measure_type
             );
 
-            res.code(200).send(filteredCustomer);
+            return res.code(200).send(filteredCustomer);
         }
-        res.code(200).send(customer);
+        return res.code(200).send(customer);
     } catch (err) {
-        res.code(500).send({
+        return res.code(500).send({
             error_code: 'SERVER_ERROR',
             error_description: 'Houve um erro no servidor',
         });
@@ -134,7 +134,7 @@ export const patchCustomer = async (
     const measure = await readMeasure(measure_uuid);
 
     if (!measure_uuid || !confirmed_value) {
-        res.code(400).send({
+        return res.code(400).send({
             error_code: 'INVALID_DATA',
             error_description:
                 'Os dados fornecidos no corpo da requisição são inválidos',
@@ -142,14 +142,14 @@ export const patchCustomer = async (
     }
 
     if (measure?.has_confirmed === true) {
-        res.code(409).send({
+        return res.code(409).send({
             error_code: 'CONFIRMATION_DUPLICATE',
             error_description: 'Leitura do mês já confirmada',
         });
     }
 
     if (!measure) {
-        res.code(404).send({
+        return res.code(404).send({
             error_code: 'MEASURE_NOT_FOUND',
             error_description: 'Leitura do mês já realizada',
         });
@@ -158,5 +158,5 @@ export const patchCustomer = async (
     // ?: Valor INTEGER mesmo?
     await updateHasConfirmed(measure_uuid, confirmed_value);
 
-    res.code(200).send({ success: true });
+    return res.code(200).send({ success: true });
 };
