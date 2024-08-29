@@ -5,8 +5,17 @@ export const readCustomer = async (customer_code: string) => {
         where: {
             customer_code,
         },
-        include: {
-            measures: true,
+        select: {
+            customer_code: true,
+            measures: {
+                select: {
+                    measure_uuid: true,
+                    measure_datetime: true,
+                    measure_type: true,
+                    has_confirmed: true,
+                    image_url: true,
+                },
+            },
         },
     });
 };
@@ -21,16 +30,15 @@ export const readMeasure = async (measure_uuid: string) => {
 
 export const updateHasConfirmed = async (
     measure_uuid: string,
-    measure_value: number
+    confirmed_value: number
 ) => {
     return await prisma.measure.update({
         where: {
             measure_uuid,
         },
         data: {
-            measure_value,
+            confirmed_value,
             has_confirmed: true,
-            confirmed_value: measure_value,
         },
     });
 };
