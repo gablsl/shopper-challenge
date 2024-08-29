@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Measure" ALTER COLUMN "confirmed_value" SET DATA TYPE DOUBLE PRECISION;
