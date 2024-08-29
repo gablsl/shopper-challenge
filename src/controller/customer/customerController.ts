@@ -1,5 +1,9 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { readCustomer } from '../../services/customer/customerService';
+import {
+    readCustomer,
+    readMeasure,
+    updateHasConfirmed,
+} from '../../services/customer/customerService';
 
 type CustomerRequest = FastifyRequest & {
     params: {
@@ -8,8 +12,13 @@ type CustomerRequest = FastifyRequest & {
     query: {
         measure_type: string;
     };
+    body: {
+        measure_uuid: string;
+        confirmed_value: number;
+    };
 };
 
+// * Não finalizado ainda
 export const getCustomer = async (req: CustomerRequest, res: FastifyReply) => {
     try {
         const { customer_code } = req.params;
@@ -22,7 +31,7 @@ export const getCustomer = async (req: CustomerRequest, res: FastifyReply) => {
             });
         }
 
-        // TODO: Fazer ficar case insensitive
+        // TODO: Tornar o measure_type case insensitive
         if (measure_type && !['WATER', 'GAS'].includes(measure_type)) {
             res.code(400).send({
                 error_code: 'INVALID_TYPE',
@@ -46,4 +55,39 @@ export const getCustomer = async (req: CustomerRequest, res: FastifyReply) => {
             error_description: 'Houve um erro no servidor',
         });
     }
+};
+
+export const patchCustomer = async (
+    req: CustomerRequest,
+    res: FastifyReply
+) => {
+    const { measure_uuid, confirmed_value } = req.body;
+
+    const measure = await readMeasure(measure_uuid);
+
+    if (!measure_uuid || !confirmed_value) {
+        res.code(400).send({
+            error_code: 'INVALID_DATA',
+            error_description:
+                'Os dados fornecidos no corpo da requisição são inválidos',
+        });
+    }
+
+    if (measure?.has_confirmed === true) {
+        res.code(409).send({
+            error_code: 'CONFIRMATION_DUPLICATE',
+            error_description: 'Leitura do mês já confirmada',
+        });
+    }
+
+    if (!measure) {
+        res.code(404).send({
+            error_code: 'MEASURE_NOT_FOUND',
+            error_description: 'Leitura do mês já realizada',
+        });
+    }
+
+    await updateHasConfirmed(measure_uuid, confirmed_value);
+
+    res.code(200).send({ success: true });
 };

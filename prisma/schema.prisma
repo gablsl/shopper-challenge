@@ -18,6 +18,8 @@ model Measure {
   measure_type          String
   has_confirmed         Boolean   @default(false)
   image_url             String
+  measure_value         Float
+  confirmed_value       Float?
   Customer              Customer? @relation(fields: [customerCustomer_code], references: [customer_code])
   customerCustomer_code String?
 }
