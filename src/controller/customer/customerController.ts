@@ -28,7 +28,6 @@ type CustomerRequest = FastifyRequest & {
     };
 };
 
-// TODO: Tornar o measure_type case insensitive
 export const getCustomer = async (req: CustomerRequest, res: FastifyReply) => {
     try {
         const { customer_code } = req.params;
@@ -126,7 +125,6 @@ export const postUpload = async (req: CustomerRequest, res: FastifyReply) => {
         return res.code(500).send({
             error_code: 'SERVER_ERROR',
             error_description: 'Houve um erro no servidor',
-            err: { err },
         });
     }
 };
@@ -135,34 +133,40 @@ export const patchCustomer = async (
     req: CustomerRequest,
     res: FastifyReply
 ) => {
-    const { measure_uuid, confirmed_value } = req.body;
+    try {
+        const { measure_uuid, confirmed_value } = req.body;
 
-    const measure = await readMeasure(measure_uuid);
+        const measure = await readMeasure(measure_uuid);
 
-    if (!measure_uuid || !confirmed_value) {
-        return res.code(400).send({
-            error_code: 'INVALID_DATA',
-            error_description:
-                'Os dados fornecidos no corpo da requisição são inválidos',
+        if (!measure?.measure_uuid || !confirmed_value) {
+            res.code(400).send({
+                error_code: 'INVALID_DATA',
+                error_description:
+                    'Os dados fornecidos no corpo da requisição são inválidos',
+            });
+        }
+
+        if (measure?.has_confirmed === true) {
+            return res.code(409).send({
+                error_code: 'CONFIRMATION_DUPLICATE',
+                error_description: 'Leitura do mês já realizada',
+            });
+        }
+
+        if (!measure) {
+            return res.code(404).send({
+                error_code: 'MEASURE_NOT_FOUND',
+                error_description: 'Leitura do mês já realizada',
+            });
+        }
+
+        await updateHasConfirmed(measure_uuid, confirmed_value);
+
+        return res.code(200).send({ success: true });
+    } catch (err) {
+        return res.code(500).send({
+            error_code: 'SERVER_ERROR',
+            error_description: 'Houve um erro no servidor',
         });
     }
-
-    if (measure?.has_confirmed === true) {
-        return res.code(409).send({
-            error_code: 'CONFIRMATION_DUPLICATE',
-            error_description: 'Leitura do mês já confirmada',
-        });
-    }
-
-    if (!measure) {
-        return res.code(404).send({
-            error_code: 'MEASURE_NOT_FOUND',
-            error_description: 'Leitura do mês já realizada',
-        });
-    }
-
-    // ?: Valor INTEGER mesmo?
-    await updateHasConfirmed(measure_uuid, confirmed_value);
-
-    return res.code(200).send({ success: true });
 };

@@ -69,7 +69,7 @@ export const measureExists = async (
             measure_type,
             measure_datetime: {
                 gte: startOfMonth,
-                lt: endOfMonth,
+                lte: endOfMonth,
             },
         },
     });

@@ -25,7 +25,7 @@ export async function uploadToGemini(imageUrl: string) {
         const file = uploadResult.file;
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-pro',
+            model: 'gemini-1.5-flash',
         });
 
         const generationConfig = {
