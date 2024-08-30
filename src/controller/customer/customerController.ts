@@ -34,28 +34,32 @@ export const getCustomer = async (req: CustomerRequest, res: FastifyReply) => {
         const { customer_code } = req.params;
         const { measure_type } = req.query;
 
-        if (!customer_code) {
+        const customer = await readCustomer(customer_code);
+
+        if (!customer) {
             return res.code(404).send({
                 error_code: 'MEASURES_NOT_FOUND',
                 error_description: 'Nenhuma leitura encontrada',
             });
         }
 
-        if (measure_type && !['WATER', 'GAS'].includes(measure_type)) {
+        if (
+            measure_type &&
+            !['WATER', 'GAS'].includes(measure_type.toUpperCase())
+        ) {
             return res.code(400).send({
                 error_code: 'INVALID_TYPE',
                 error_description: 'Tipo de medição não permitida',
             });
         }
 
-        const customer = await readCustomer(customer_code);
-
         if (measure_type) {
-            const filteredCustomer = customer?.measures.filter(
-                (measure) => measure.measure_type === measure_type
+            const measures = customer?.measures.filter(
+                (measure) => measure.measure_type === measure_type.toUpperCase()
             );
 
-            return res.code(200).send(filteredCustomer);
+            const response = { customer_code, measures };
+            return res.code(200).send(response);
         }
         return res.code(200).send(customer);
     } catch (err) {
