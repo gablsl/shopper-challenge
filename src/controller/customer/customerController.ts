@@ -1,5 +1,5 @@
 import { measureExists } from './../../services/customer/customerService';
-import { FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyReply } from 'fastify';
 import {
     createCustomer,
     createUpload,
@@ -10,23 +10,7 @@ import {
 } from '../../services/customer/customerService';
 import { getDateRange } from '../../utils/dateUtils';
 import { uploadToGemini } from '../../utils/uploadToGemini';
-
-type CustomerRequest = FastifyRequest & {
-    params: {
-        customer_code: string;
-    };
-    query: {
-        measure_type: string;
-    };
-    body: {
-        measure_uuid: string;
-        confirmed_value: number;
-        image: string;
-        customer_code: string;
-        measure_datetime: string;
-        measure_type: string;
-    };
-};
+import { CustomerRequest, MeasureType } from '../../types/customerTypes';
 
 export const getCustomer = async (req: CustomerRequest, res: FastifyReply) => {
     try {
@@ -54,7 +38,8 @@ export const getCustomer = async (req: CustomerRequest, res: FastifyReply) => {
 
         if (measure_type) {
             const measures = customer?.measures.filter(
-                (measure) => measure.measure_type === measure_type.toUpperCase()
+                (measure: MeasureType) =>
+                    measure.measure_type === measure_type.toUpperCase()
             );
 
             const response = { customer_code, measures };
