@@ -1,0 +1,31 @@
+services:
+    postgres:
+        image: postgres:15
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: shopperdatabase
+        volumes:
+            - ./postgres_data:/var/lib/postgresql/shopperdatabasedata
+        ports:
+            - '5432:5432'
+
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - '3000:3000'
+        environment:
+            GEMINI_API_KEY: ${GEMINI_API_KEY}
+            FASTIFY_PORT: 3000
+            DATABASE_URL: 'postgresql://postgres:postgres@postgres:5432/shopperdatabase?schema=public'
+        command: sh -c 'npx prisma generate && npx prisma migrate dev --name init && npm run start'
+        depends_on:
+            - postgres
+
+volumes:
+    postgres_data:
+
+networks:
+    app-network:
